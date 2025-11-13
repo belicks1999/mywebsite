@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ChevronDown, Code, Rocket } from "lucide-react";
+import { useMemo } from "react";
 
 export default function Hero() {
   const handleScroll = (targetId: string) => {
@@ -11,44 +12,212 @@ export default function Hero() {
     }
   };
 
+  // Generate stable bubble configurations
+  const bubbles = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      size: Math.random() * 40 + 10, // Random size between 10-50px
+      left: Math.random() * 100, // Random horizontal position
+      delay: Math.random() * 5, // Random delay
+      duration: Math.random() * 8 + 6, // Random duration between 6-14 seconds
+      opacity: Math.random() * 0.3 + 0.2, // Random opacity between 0.2-0.5
+      xDrift: Math.random() * 20 - 10, // Slight horizontal drift
+    }));
+  }, []);
+
+  // Generate stable fish configurations
+  const fishes = useMemo(() => {
+    return Array.from({ length: 8 }, (_, i) => {
+      const startX = Math.random() * 80 + 10; // Random starting X position (10-90%)
+      const startY = Math.random() * 80 + 10; // Random starting Y position (10-90%)
+      const direction = Math.random() > 0.5 ? 1 : -1; // 1 for right, -1 for left
+      const distance = Math.random() * 40 + 30; // Distance to travel
+      const endX = Math.max(5, Math.min(95, startX + direction * distance)); // End X
+      const endY = Math.max(
+        5,
+        Math.min(95, startY + (Math.random() * 30 - 15))
+      ); // End Y
+      const midX = (startX + endX) / 2 + (Math.random() * 15 - 7.5); // Curved path
+      const midY = (startY + endY) / 2 + (Math.random() * 15 - 7.5);
+
+      return {
+        id: i,
+        size: 40, // Fixed size - all fish are the same size
+        startX,
+        startY,
+        endX,
+        endY,
+        midX,
+        midY,
+        delay: Math.random() * 3,
+        duration: Math.random() * 15 + 10, // Random duration between 10-25 seconds
+        color: [
+          "#FF6B6B", // Red
+          "#4ECDC4", // Teal
+          "#45B7D1", // Blue
+          "#FFA07A", // Light Salmon
+          "#98D8C8", // Mint
+          "#F7DC6F", // Yellow
+          "#BB8FCE", // Purple
+          "#85C1E2", // Sky Blue
+        ][Math.floor(Math.random() * 8)],
+        direction,
+      };
+    });
+  }, []);
+
   return (
     <section
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900"
     >
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+      {/* Fish Tank Bubble Effect */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {bubbles.map((bubble) => (
           <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-blue-400 rounded-full opacity-50"
-            initial={{
-              x:
-                typeof window !== "undefined"
-                  ? Math.random() * window.innerWidth
-                  : 0,
-              y:
-                typeof window !== "undefined"
-                  ? Math.random() * window.innerHeight
-                  : 0,
+            key={bubble.id}
+            className="absolute rounded-full"
+            style={{
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              left: `${bubble.left}%`,
+              bottom: "-50px",
+              opacity: bubble.opacity,
+              border: `1px solid rgba(255, 255, 255, 0.3)`,
+              background: `
+                radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.9) 15%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(173, 216, 230, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(173, 216, 230, 0.15) 50%, rgba(135, 206, 250, 0.1) 100%)
+              `,
+              boxShadow: `
+                inset 0 0 ${bubble.size * 0.3}px rgba(255, 255, 255, 0.3),
+                inset -${bubble.size * 0.1}px -${bubble.size * 0.1}px ${
+                bubble.size * 0.2
+              }px rgba(0, 0, 0, 0.1),
+                0 0 ${bubble.size * 0.2}px rgba(173, 216, 230, 0.2)
+              `,
+              backdropFilter: "blur(1px)",
             }}
             animate={{
-              y:
-                typeof window !== "undefined"
-                  ? [null, Math.random() * window.innerHeight]
-                  : undefined,
-              x:
-                typeof window !== "undefined"
-                  ? [null, Math.random() * window.innerWidth]
-                  : undefined,
+              y: ["0vh", "-120vh"],
+              x: [0, `${bubble.xDrift}px`],
+              scale: [1, 1.1, 0.9],
             }}
             transition={{
-              duration: Math.random() * 10 + 10,
+              duration: bubble.duration,
+              delay: bubble.delay,
               repeat: Infinity,
-              repeatType: "reverse",
+              ease: "linear",
             }}
           />
         ))}
+      </div>
+
+      {/* Swimming Fish */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {fishes.map((fish) => {
+          const initialFlip = fish.direction === -1 ? -1 : 1;
+
+          return (
+            <motion.div
+              key={fish.id}
+              className="absolute"
+              style={{
+                width: `${fish.size}px`,
+                height: `${fish.size * 0.6}px`,
+                left: `${fish.startX}%`,
+                top: `${fish.startY}%`,
+                opacity: 0.7,
+                transformOrigin: "center",
+              }}
+              animate={{
+                left: [
+                  `${fish.startX}%`,
+                  `${fish.midX}%`,
+                  `${fish.endX}%`,
+                  `${fish.midX}%`,
+                  `${fish.startX}%`,
+                ],
+                top: [
+                  `${fish.startY}%`,
+                  `${fish.midY}%`,
+                  `${fish.endY}%`,
+                  `${fish.midY}%`,
+                  `${fish.startY}%`,
+                ],
+                scaleX: [
+                  initialFlip,
+                  initialFlip,
+                  initialFlip * -1,
+                  initialFlip * -1,
+                  initialFlip,
+                ],
+              }}
+              transition={{
+                duration: fish.duration,
+                delay: fish.delay,
+                repeat: Infinity,
+                ease: "easeInOut",
+                times: [0, 0.25, 0.5, 0.75, 1],
+              }}
+            >
+              <svg
+                width={fish.size}
+                height={fish.size * 0.6}
+                viewBox="0 0 60 36"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                {/* Fish body */}
+                <ellipse
+                  cx="30"
+                  cy="18"
+                  rx="22"
+                  ry="12"
+                  fill={fish.color}
+                  opacity="0.8"
+                />
+                {/* Fish tail */}
+                <path
+                  d="M 8 18 Q 0 10 0 18 Q 0 26 8 18"
+                  fill={fish.color}
+                  opacity="0.9"
+                />
+                {/* Fish fin (top) */}
+                <ellipse
+                  cx="20"
+                  cy="10"
+                  rx="6"
+                  ry="8"
+                  fill={fish.color}
+                  opacity="0.6"
+                />
+                {/* Fish fin (bottom) */}
+                <ellipse
+                  cx="20"
+                  cy="26"
+                  rx="6"
+                  ry="8"
+                  fill={fish.color}
+                  opacity="0.6"
+                />
+                {/* Fish eye */}
+                <circle cx="38" cy="16" r="3" fill="white" />
+                <circle cx="39" cy="15" r="1.5" fill="black" />
+                {/* Fish pattern/stripe */}
+                <ellipse
+                  cx="25"
+                  cy="18"
+                  rx="8"
+                  ry="6"
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.3)"
+                  strokeWidth="1"
+                />
+              </svg>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Gradient Orbs */}
@@ -81,7 +250,7 @@ export default function Hero() {
           </motion.div>
 
           <motion.p
-            className="text-lg md:text-xl text-gray-200 dark:text-gray-400 mb-8 max-w-2xl mx-auto"
+            className="text-lg md:text-xl text-gray-200 dark:text-white mb-8 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}

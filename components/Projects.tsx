@@ -1,9 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { ExternalLink, Github, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, Github, ChevronDown, ChevronUp, X } from "lucide-react";
+import emailjs from "@emailjs/browser";
 
 const projects = [
   {
@@ -11,7 +12,7 @@ const projects = [
     title: "Student Eligibility Verification Web App",
     description:
       "A web-based portal developed for Hameed Al Husseinie College, Colombo to verify student eligibility based on their geographical location and defined radius criteria. The system enables the college to efficiently validate applicants' eligibility through integrated map-based checks. I handled both front-end and back-end development, implementing server-side rendering and seamless API integration.",
-    period: "Oct 2025 – Oct 2025",
+    period: "Aug 2025 – Oct 2025",
     technologies: [
       "Next.js",
       "Next.js API Routes (SSR)",
@@ -100,9 +101,11 @@ const itemVariants = {
 function ProjectCard({
   project,
   variants,
+  onGithubClick,
 }: {
   project: (typeof projects)[0];
   variants: typeof itemVariants;
+  onGithubClick: (projectTitle: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const descriptionWords = project.description.split(" ");
@@ -203,10 +206,8 @@ function ProjectCard({
                 <ExternalLink className="w-4 h-4" />
               </motion.a>
             )}
-            <motion.a
-              href={project.github}
-              target="_blank"
-              rel="noopener noreferrer"
+            <motion.button
+              onClick={() => onGithubClick(project.title)}
               className={`px-4 py-3 rounded-xl font-semibold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all flex items-center justify-center ${
                 !project.demo ? "flex-1" : ""
               }`}
@@ -214,7 +215,7 @@ function ProjectCard({
               whileTap={{ scale: 0.95 }}
             >
               <Github className="w-5 h-5" />
-            </motion.a>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -225,6 +226,71 @@ function ProjectCard({
 export default function Projects() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
+
+  const handleGithubClick = (projectTitle: string) => {
+    setSelectedProject(projectTitle);
+    setIsModalOpen(true);
+    setEmail("");
+    setSubmitStatus({ type: null, message: "" });
+  };
+
+  const handleRequestAccess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: "" });
+
+    // EmailJS configuration
+    const serviceId =
+      process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
+    const templateId =
+      process.env.NEXT_PUBLIC_EMAILJS_GITHUB_TEMPLATE_ID ||
+      process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID ||
+      "YOUR_TEMPLATE_ID";
+    const publicKey =
+      process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
+
+    try {
+      await emailjs.send(
+        serviceId,
+        templateId,
+        {
+          message:
+            "I would like to request access to the private repository of the project: " +
+            selectedProject,
+          from_email: email,
+          to_email: "belicks.maxwell@gmail.com",
+        },
+        publicKey
+      );
+
+      setSubmitStatus({
+        type: "success",
+        message: "Request sent successfully! I'll get back to you soon.",
+      });
+      setEmail("");
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSubmitStatus({ type: null, message: "" });
+      }, 2000);
+    } catch (error) {
+      console.error("EmailJS error:", error);
+      setSubmitStatus({
+        type: "error",
+        message:
+          "Something went wrong. Please try again or email me directly at belicks.maxwell@gmail.com",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section
@@ -260,10 +326,128 @@ export default function Projects() {
               key={project.id}
               project={project}
               variants={itemVariants}
+              onGithubClick={handleGithubClick}
             />
           ))}
         </motion.div>
       </div>
+
+      {/* GitHub Access Request Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 relative">
+                {/* Close Button */}
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                </button>
+
+                {/* Modal Content */}
+                <div className="space-y-6">
+                  {/* Icon and Title */}
+                  <div className="text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 mb-4">
+                      <Github className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      Private Repository
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      This repository is private. Request access to view the
+                      code.
+                    </p>
+                  </div>
+
+                  {/* Project Name */}
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                      Project:
+                    </p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {selectedProject}
+                    </p>
+                  </div>
+
+                  {/* Form */}
+                  <form onSubmit={handleRequestAccess} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Your Email
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+
+                    {submitStatus.type && (
+                      <div
+                        className={`p-4 rounded-lg ${
+                          submitStatus.type === "success"
+                            ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800"
+                            : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800"
+                        }`}
+                      >
+                        <p className="text-sm font-medium">
+                          {submitStatus.message}
+                        </p>
+                      </div>
+                    )}
+
+                    <motion.button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Sending Request...
+                        </>
+                      ) : (
+                        <>
+                          <Github className="w-5 h-5" />
+                          Request Access
+                        </>
+                      )}
+                    </motion.button>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -24,6 +24,10 @@ import {
   SiStrapi,
   SiPostman,
   SiJira,
+  SiHtml5,
+  SiSharp,
+  SiPayloadcms,
+  SiJavascript,
 } from "react-icons/si";
 
 const technologies = [
@@ -50,6 +54,24 @@ const technologies = [
     name: "TypeScript",
     icon: SiTypescript,
     color: "from-blue-600 to-blue-800",
+    category: "Language",
+  },
+  {
+    name: "JavaScript",
+    icon: SiJavascript,
+    color: "from-yellow-400 to-yellow-600",
+    category: "Language",
+  },
+  {
+    name: "HTML",
+    icon: SiHtml5,
+    color: "from-orange-500 to-orange-600",
+    category: "Language",
+  },
+  {
+    name: "C#",
+    icon: SiSharp,
+    color: "from-purple-600 to-purple-800",
     category: "Language",
   },
   {
@@ -160,6 +182,12 @@ const technologies = [
     name: "Strapi",
     icon: SiStrapi,
     color: "from-indigo-500 to-purple-600",
+    category: "CMS",
+  },
+  {
+    name: "Payload CMS",
+    icon: SiPayloadcms,
+    color: "from-blue-500 to-indigo-600",
     category: "CMS",
   },
 ];
